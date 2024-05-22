@@ -1,0 +1,101 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v1912                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    "alpha.*"
+    {
+        // Entries taken from "TwoPhaseFlow/testsuite/surfaceTension/sinWave/system/fvSolution"
+        advectionScheme isoAdvection;
+
+        reconstructionScheme plicRDF;
+
+	vof2IsoTol      1e-8;
+	surfCellTol     1e-8;
+	writeVTK        false;
+
+
+        isoFaceTol      1e-8;
+        surfCellTol     1e-8;
+        nAlphaBounds    3;
+        snapTol         1e-12;
+        clip            true;
+
+        nAlphaSubCycles 2;
+        nAlphaCorr      1;
+        cAlpha          1;
+        writeIsoFaces   false;
+
+        wispLengthRatio 0.1;  // maximum ratio between wisp PLIC area and cell face area
+                                // cells with smaller PLIC planes are considered wisps
+
+        wispMethod      treatAsLevel1; 	// general method how wisps are treated in loop
+                                        // options: treatAsLevel1 , otherwise default implementation
+                                        // is used.
+        
+	wispCorrMethod  excludeWispsFromWispCorr;       // options: excludeWispsFromWispCorr --> neighbor 
+                                                        // wisps do not influence each other. otherwise default
+                                                        // implementation is used. 
+                                                        // (experimental stage, not fully tested yet)
+
+    }
+
+    "pcorr.*"
+    {
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-10;
+        relTol          0;
+    }
+
+    p_rgh
+    {
+        solver          GAMG;
+        smoother        DICGaussSeidel;
+        tolerance       1e-09;
+        relTol          0;
+    }
+
+    p_rghFinal
+    {
+        $p_rgh;
+    }
+
+    U
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-08;
+        relTol          0;
+    }
+
+    UFinal
+    {
+        $U;
+    }
+}
+
+
+PIMPLE
+{
+    momentumPredictor   yes;
+    nOuterCorrectors    1;
+    nCorrectors         3;
+    nNonOrthogonalCorrectors 0;
+}
+
+// ************************************************************************* //
